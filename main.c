@@ -14,6 +14,12 @@ int main() {
     Vector2 ballVelocity = {200.0f, -200.0f};
     float ballRadius = 10.0f;
 
+    const int BLOCK_ROWS = 5;
+    const int BLOCK_COLUMNS = 10;
+    const float BLOCK_WIDTH = SCREEN_WIDTH / BLOCK_COLUMNS;
+    const float BLOCK_HEIGHT = 20.0f;
+    bool blocks[BLOCK_ROWS][BLOCK_COLUMNS] = {true};
+
     while (!WindowShouldClose()) {
         float delta_time = GetFrameTime();
 
@@ -46,8 +52,35 @@ int main() {
             ballVelocity.x = hitPosition * 300.0f;
         }
 
+        for (int row = 0; row < BLOCK_ROWS; row++) {
+            for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                if (blocks[row][col]) {
+                    Rectangle block = {
+                    col * BLOCK_WIDTH, row * BLOCK_HEIGHT, BLOCK_WIDTH, BLOCK_HEIGHT
+                    };
+
+                    if (CheckCollisionCircleRec(ballPosition, ballRadius, block)) {
+                        blocks[row][col] = false;
+                        ballVelocity.y *= -1;
+                        break;
+                    }
+                }
+            }
+        }
+
         BeginDrawing();
         ClearBackground(BLACK);
+
+        for (int row = 0; row < BLOCK_ROWS; row++) {
+            for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                if (blocks[row][col]) {
+                    Rectangle block = {
+                    col * BLOCK_WIDTH, row * BLOCK_HEIGHT, BLOCK_WIDTH, BLOCK_HEIGHT
+                    };
+                    DrawRectangleRec(block, BLUE);
+                }
+            }
+        }
 
         //MeasureText calculated text width in pixels for the font size, used to center text.
         DrawText("Welcome!", SCREEN_WIDTH / 2 - MeasureText("Welcome!", 40) / 2, SCREEN_HEIGHT/2 - 60, 40, WHITE);
