@@ -5,6 +5,11 @@
 #define SCREEN_HEIGHT 600
 #define PADDLE_SPEED 500.0f
 
+#define BLOCK_ROWS 5
+#define BLOCK_COLUMNS 10
+#define BLOCK_WIDTH (SCREEN_WIDTH / BLOCK_COLUMNS)
+#define BLOCK_HEIGHT 20.0f
+
 int main() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pixel Breaker");
     SetTargetFPS(120);
@@ -14,10 +19,6 @@ int main() {
     Vector2 ballVelocity = {200.0f, -200.0f};
     float ballRadius = 10.0f;
 
-    const int BLOCK_ROWS = 5;
-    const int BLOCK_COLUMNS = 10;
-    const float BLOCK_WIDTH = SCREEN_WIDTH / BLOCK_COLUMNS;
-    const float BLOCK_HEIGHT = 20.0f;
     bool blocks[BLOCK_ROWS][BLOCK_COLUMNS] = {true};
 
     while (!WindowShouldClose()) {
