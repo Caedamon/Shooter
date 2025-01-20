@@ -7,8 +7,17 @@
 
 #define BLOCK_ROWS 5
 #define BLOCK_COLUMNS 10
-#define BLOCK_WIDTH (SCREEN_WIDTH / BLOCK_COLUMNS)
-#define BLOCK_HEIGHT 20.0f
+float ballSpeed = 200.0f;
+#define BLOCK_RADIUS (ballRadius *3)
+#define MAX_BALL_SPEED 1500.0f
+
+typedef struct {
+    int number;
+    float radius;
+    Color color;
+    bool active;
+    Vector2 position;
+} Block;
 
 int main() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pixel Breaker");
@@ -16,11 +25,25 @@ int main() {
 
     Rectangle paddle = {SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, 100, 20};
     Vector2 ballPosition = {SCREEN_WIDTH / 2, SCREEN_HEIGHT /2};
-    Vector2 ballVelocity = {200.0f, -200.0f};
+    Vector2 ballVelocity = Vector2Scale(Vector2Normalize((Vector2){200.0f, -200.0f}), ballSpeed);
     float ballRadius = 10.0f;
 
-    bool blocks[BLOCK_ROWS][BLOCK_COLUMNS] = {true};
+    //create blocks
+    Block blocks[BLOCK_ROWS][BLOCK_COLUMNS];
+    for (int row = 0; row < BLOCK_ROWS; row++) {
+        for (int col = 0; col < BLOCK_COLUMNS; col++) {
+            blocks[row][col].number = 4;
+            blocks[row][col].radius = BLOCK_RADIUS;
+            blocks[row][col].color = BLUE;
+            blocks[row][col].active = true;
 
+            //random positioning of blocks to make it harder
+            blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
+            blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
+        }
+    }
+
+    //settup key's to play
     while (!WindowShouldClose()) {
         float delta_time = GetFrameTime();
 
@@ -53,16 +76,36 @@ int main() {
             ballVelocity.x = hitPosition * 300.0f;
         }
 
+        //this handles block collisions
         for (int row = 0; row < BLOCK_ROWS; row++) {
             for (int col = 0; col < BLOCK_COLUMNS; col++) {
-                if (blocks[row][col]) {
-                    Rectangle block = {
-                    col * BLOCK_WIDTH, row * BLOCK_HEIGHT, BLOCK_WIDTH, BLOCK_HEIGHT
-                    };
+                if (blocks[row][col].active) {
+                    float blockX = col * (BLOCK_RADIUS * 2) + BLOCK_RADIUS;
+                    float blockY = row * (BLOCK_RADIUS * 2) + BLOCK_RADIUS;
 
-                    if (CheckCollisionCircleRec(ballPosition, ballRadius, block)) {
-                        blocks[row][col] = false;
+                    //delete block after number reaches 0
+                    if (blocks[row][col].number <= 0) {
+                        blocks[row][col].active = false;
+                    }
+
+                    if (CheckCollisionCircles(ballPosition, ballRadius, blocks[row][col].position, blocks[row][col].radius)) {
+                        blocks[row][col].number--;
+                        blocks[row][col].radius *=0.75f;
                         ballVelocity.y *= -1;
+
+                        // this changes the color of the blocks depending on  wich number it is
+                        switch (blocks[row][col].number) {
+                            case 3: blocks[row][col].color = GREEN; break;
+                            case 2: blocks[row][col].color = YELLOW; break;
+                            case 1: blocks[row][col].color = RED; break;
+                        }
+
+                        //increase ballspeed by 10% when "block" is hit.
+                        ballSpeed *= 1.1f;
+                        if (ballSpeed > MAX_BALL_SPEED) {
+                            ballSpeed = MAX_BALL_SPEED;
+                        }
+                        ballVelocity = Vector2Scale(Vector2Normalize(ballVelocity), ballSpeed);
                         break;
                     }
                 }
@@ -72,16 +115,21 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        for (int row = 0; row < BLOCK_ROWS; row++) {
-            for (int col = 0; col < BLOCK_COLUMNS; col++) {
-                if (blocks[row][col]) {
-                    Rectangle block = {
-                    col * BLOCK_WIDTH, row * BLOCK_HEIGHT, BLOCK_WIDTH, BLOCK_HEIGHT
-                    };
-                    DrawRectangleRec(block, BLUE);
+            // Draw block circles
+            for (int row = 0; row < BLOCK_ROWS; row++) {
+                for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                    if (blocks[row][col].active) {
+                        float blockX = col * (BLOCK_RADIUS * 2) + BLOCK_RADIUS;
+                        float blockY = row * (BLOCK_RADIUS * 2) + BLOCK_RADIUS;
+                        if (blocks[row][col].active) {
+                            DrawCircle(blocks[row][col].position.x, blocks[row][col].position.y, blocks[row][col].radius, blocks[row][col].color);
+                            DrawText(TextFormat("%d", blocks[row][col].number),
+                                     blocks[row][col].position.x - MeasureText(TextFormat("%d", blocks[row][col].number), 20) / 2,
+                                     blocks[row][col].position.y - 10, 20, WHITE);
+                        }
+                    }
                 }
             }
-        }
 
         //MeasureText calculated text width in pixels for the font size, used to center text.
         DrawText("Welcome!", SCREEN_WIDTH / 2 - MeasureText("Welcome!", 40) / 2, SCREEN_HEIGHT/2 - 60, 40, WHITE);
