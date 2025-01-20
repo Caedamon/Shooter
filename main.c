@@ -29,12 +29,21 @@ int main() {
         ballPosition.y += ballVelocity.y * delta_time;
 
         //Wall Collisions
-        if (ballPosition.x * ballRadius <= 0 || ballPosition.x + ballRadius >= SCREEN_WIDTH) {
+        if (ballPosition.x - ballRadius <= 0 || ballPosition.x + ballRadius >= SCREEN_WIDTH) {
             ballVelocity.x *= -1;
         }
         //Reverse Vertical Velocity when hitting top or bottom
         if (ballPosition.y - ballRadius <= 0 || ballPosition.y + ballRadius >= SCREEN_HEIGHT) {
             ballVelocity.y *=-1;
+        }
+
+        //checks collision and reverses the balls direction when paddle collision occurs
+        if (CheckCollisionCircleRec(ballPosition, ballRadius, paddle)) {
+            ballVelocity.y *= -1;
+
+            //ball hitposition on paddle
+            float hitPosition = (ballPosition.x - (paddle.x + paddle.width / 2)) / paddle.width / 2;
+            ballVelocity.x = hitPosition * 300.0f;
         }
 
         BeginDrawing();
