@@ -22,7 +22,9 @@ typedef struct {
 int main() {
     bool gameOver = false;
     bool ballStuck = true;
-    bool gameStarted = false; // Flag to track game state
+    bool gameStarted = false;
+    bool win = false;
+    int lives = 3;
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pixel Breaker");
     SetTargetFPS(120);
 
@@ -40,9 +42,9 @@ int main() {
             blocks[row][col].color = BLUE;
             blocks[row][col].active = true;
 
-            // grid-based positioning of blocks to prevent overlap
-            blocks[row][col].position.x = col * (BLOCK_RADIUS * 2 + 10) + BLOCK_RADIUS;
-            blocks[row][col].position.y = row * (BLOCK_RADIUS * 2 + 10) + BLOCK_RADIUS;
+            // Randomized positioning for blocks
+            blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
+            blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
         }
     }
 
@@ -74,12 +76,52 @@ int main() {
                         blocks[row][col].radius = BLOCK_RADIUS;
                         blocks[row][col].color = BLUE;
                         blocks[row][col].active = true;
+
+                        // Randomized positioning for blocks
+                        blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
+                        blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
                     }
                 }
             } else if (IsKeyPressed(KEY_ESCAPE)) {
                 CloseWindow();
                 return 0;
             }
+
+            EndDrawing();
+            continue;
+        }
+
+        if (win) {
+            DrawText("YOU WIN!", SCREEN_WIDTH / 2 - MeasureText("YOU WIN!", 50) / 2, SCREEN_HEIGHT / 2 - 50, 50, GREEN);
+            DrawText("Press R to restart", SCREEN_WIDTH / 2 - MeasureText("Press R to restart", 20) / 2, SCREEN_HEIGHT / 2 + 20, 20, WHITE);
+            DrawText("Press ESC to quit", SCREEN_WIDTH / 2 - MeasureText("Press ESC to quit", 20) / 2, SCREEN_HEIGHT / 2 + 60, 20, WHITE);
+
+            if (IsKeyPressed(KEY_R)) {
+                gameOver = false;
+                gameStarted = false;
+                win = false;
+                ballStuck = true;
+                ballSpeed = 200.0f;
+                ballPosition = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
+                ballVelocity = Vector2Zero();
+
+                for (int row = 0; row < BLOCK_ROWS; row++) {
+                    for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                        blocks[row][col].number = 4;
+                        blocks[row][col].radius = BLOCK_RADIUS;
+                        blocks[row][col].color = BLUE;
+                        blocks[row][col].active = true;
+
+                        // Randomized positioning for blocks
+                        blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
+                        blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
+                    }
+                }
+            } else if (IsKeyPressed(KEY_ESCAPE)) {
+                CloseWindow();
+                return 0;
+            }
+
             EndDrawing();
             continue;
         }
@@ -123,10 +165,19 @@ int main() {
                 }
 
                 if (ballPosition.y - ballRadius <= 0) {
-                    ballVelocity.y *= -1; // Bounce off the top boundary
+                    ballVelocity.y *= -1;
                 }
+                //lives and logic for removing lives
                 if (ballPosition.y + ballRadius > SCREEN_HEIGHT) {
-                    gameOver = true; // Trigger game over if the ball hits the bottom
+                    lives--;
+                    if (lives <= 0) {
+                        gameOver = true;
+                    } else {
+                        ballStuck = true;
+                        ballPosition = (Vector2){paddle.x + paddle.width / 2,  paddle.y - ballRadius};
+                        ballSpeed = 200.0f;
+                        ballVelocity = Vector2Zero();
+                    }
                 }
 
                 // Paddle collision
@@ -185,7 +236,6 @@ int main() {
                     }
                 }
             }
-
             // Draw block circles
             for (int row = 0; row < BLOCK_ROWS; row++) {
                 for (int col = 0; col < BLOCK_COLUMNS; col++) {
@@ -204,10 +254,8 @@ int main() {
             // Draw Ball
             DrawCircleV(ballPosition, ballRadius, WHITE);
         }
-
         EndDrawing();
     }
-
     CloseWindow();
     return 0;
 }
