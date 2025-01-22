@@ -45,6 +45,12 @@ int main() {
             // Randomized positioning for blocks
             blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
             blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
+
+            //Purple Blocks = +1 life
+            if (GetRandomValue(0,9) == 0) {
+                blocks[row][col].color = PURPLE;
+                blocks[row][col].number = 1;
+            }
         }
     }
 
@@ -89,6 +95,18 @@ int main() {
 
             EndDrawing();
             continue;
+        }
+
+        //setting up WIN conditions
+        win = true;
+        for (int row = 0; row < BLOCK_ROWS; row++) {
+            for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                if (blocks[row][col].active) {
+                    win = false;
+                    break;
+                }
+            }
+            if (!win) break;
         }
 
         if (win) {
@@ -219,6 +237,15 @@ int main() {
                                     case 1: blocks[row][col].color = RED; break;
                                 }
 
+                                //handling the logic for Life (Purple) block
+                                if (blocks[row][col].color.r == PURPLE.r &&
+                                    blocks[row][col].color.g == PURPLE.g &&
+                                    blocks[row][col].color.b == PURPLE.b &&
+                                    blocks[row][col].color.a == PURPLE.a) {
+                                    lives++;
+                                    blocks[row][col].active = false;
+                                }
+
                                 // delete block after number reaches 0
                                 if (blocks[row][col].number <= 0) {
                                     blocks[row][col].active = false;
@@ -247,6 +274,9 @@ int main() {
                     }
                 }
             }
+
+            //Draw Life Counter
+            DrawText(TextFormat("Lives: %d", lives), 10,10,20, WHITE);
 
             // Draw Paddle
             DrawRectangleRec(paddle, WHITE);
