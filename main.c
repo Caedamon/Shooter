@@ -1,5 +1,5 @@
 #include "raylib.h"
-#include "raymath.h"
+#include <math.h>
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -19,6 +19,25 @@ typedef struct {
     Vector2 position;
 } Block;
 
+// Custom Vector Math Functions
+float MagnitudeVector2(Vector2 v) {
+    return sqrtf(v.x * v.x + v.y * v.y);
+}
+
+Vector2 NormalizeVector2(Vector2 v) {
+    float magnitude = MagnitudeVector2(v);
+    if (magnitude == 0) return (Vector2){0, 0}; // Handle zero vector
+    return (Vector2){v.x / magnitude, v.y / magnitude};
+}
+
+Vector2 ScaleVector2(Vector2 v, float scale) {
+    return (Vector2){v.x * scale, v.y * scale};
+}
+
+Vector2 ZeroVector2() {
+    return (Vector2){0, 0};
+}
+
 int main() {
     bool gameOver = false;
     bool ballStuck = true;
@@ -30,7 +49,7 @@ int main() {
 
     Rectangle paddle = {SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, 100, 20};
     Vector2 ballPosition = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
-    Vector2 ballVelocity = Vector2Scale(Vector2Normalize((Vector2){200.0f, -200.0f}), ballSpeed);
+    Vector2 ballVelocity = ScaleVector2(NormalizeVector2((Vector2){200.0f, -200.0f}), ballSpeed);
     float ballRadius = 10.0f;
 
     // create blocks
@@ -72,7 +91,7 @@ int main() {
                 gameStarted = false;
                 ballStuck = true;
                 ballPosition = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
-                ballVelocity = Vector2Scale(Vector2Normalize((Vector2){200.0f, -200.0f}), ballSpeed);
+                ballVelocity = ScaleVector2(NormalizeVector2((Vector2){200.0f, -200.0f}), ballSpeed);
                 ballSpeed = 200.0f;
 
                 // Reactivate all blocks
@@ -121,7 +140,7 @@ int main() {
                 ballStuck = true;
                 ballSpeed = 200.0f;
                 ballPosition = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
-                ballVelocity = Vector2Zero();
+                ballVelocity = ZeroVector2();
 
                 for (int row = 0; row < BLOCK_ROWS; row++) {
                     for (int col = 0; col < BLOCK_COLUMNS; col++) {
@@ -170,7 +189,7 @@ int main() {
 
                 if (IsKeyPressed(KEY_SPACE)) {
                     ballStuck = false;
-                    ballVelocity = Vector2Scale(Vector2Normalize((Vector2){200.0f, -200.0f}), ballSpeed);
+                    ballVelocity = ScaleVector2(NormalizeVector2((Vector2){200.0f, -200.0f}), ballSpeed);
                 }
             } else {
                 // Ball movement
@@ -194,7 +213,7 @@ int main() {
                         ballStuck = true;
                         ballPosition = (Vector2){paddle.x + paddle.width / 2,  paddle.y - ballRadius};
                         ballSpeed = 200.0f;
-                        ballVelocity = Vector2Zero();
+                        ballVelocity = ZeroVector2();
                     }
                 }
 
@@ -217,7 +236,7 @@ int main() {
                     }
 
                     // Normalize and scale the velocity to maintain speed
-                    ballVelocity = Vector2Scale(Vector2Normalize(ballVelocity), ballSpeed);
+                    ballVelocity = ScaleVector2(NormalizeVector2(ballVelocity), ballSpeed);
                 }
 
                 // Block collisions
@@ -256,7 +275,7 @@ int main() {
                                 if (ballSpeed > MAX_BALL_SPEED) {
                                     ballSpeed = MAX_BALL_SPEED;
                                 }
-                                ballVelocity = Vector2Scale(Vector2Normalize(ballVelocity), ballSpeed);
+                                ballVelocity = ScaleVector2(NormalizeVector2(ballVelocity), ballSpeed);
                                 break;
                             }
                         }
