@@ -10,6 +10,9 @@
 float ballSpeed = 200.0f;
 #define BLOCK_RADIUS (ballRadius * 3)
 #define MAX_BALL_SPEED 1000.0f
+#define PURPLE (Color){128, 0, 128, 255} // RGBA for Purple
+#define TEAL (Color){0, 128, 128, 255} // RGB for Teal
+#define PI 3.14159265358979323846
 
 typedef struct {
     int number;
@@ -18,6 +21,15 @@ typedef struct {
     bool active;
     Vector2 position;
 } Block;
+
+// struct for exploding bock
+typedef struct {
+    Vector2 position;
+    Vector2 velocity;
+    float radius;
+    int hitsRemaining;
+    bool active;
+} ExplodingBall;
 
 // Custom Vector Math Functions
 float MagnitudeVector2(Vector2 v) {
@@ -38,12 +50,21 @@ Vector2 ZeroVector2() {
     return (Vector2){0, 0};
 }
 
+// Custom function to compare Colors
+bool ColorsEqual(Color c1, Color c2) {
+    return (c1.r == c2.r && c1.g == c2.g && c1.b == c2.b && c1.a == c2.a);
+}
+
 int main() {
     bool gameOver = false;
     bool ballStuck = true;
     bool gameStarted = false;
     bool win = false;
     int lives = 3;
+
+    #define MAX_EXPLODING_BALLS 10
+    ExplodingBall explodingBalls[MAX_EXPLODING_BALLS];
+
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pixel Breaker");
     SetTargetFPS(120);
 
@@ -65,10 +86,14 @@ int main() {
             blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
             blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
 
-            //Purple Blocks = +1 life
-            if (GetRandomValue(0,9) == 0) {
+            // Purple Blocks = +1 life
+            int randomValue = GetRandomValue(0, 19);
+            if (randomValue == 0) {
                 blocks[row][col].color = PURPLE;
                 blocks[row][col].number = 1;
+            } else if (randomValue == 1) {
+                blocks[row][col].color = TEAL;
+                blocks[row][col].number = -1;
             }
         }
     }
@@ -94,6 +119,8 @@ int main() {
                 ballVelocity = ScaleVector2(NormalizeVector2((Vector2){200.0f, -200.0f}), ballSpeed);
                 ballSpeed = 200.0f;
 
+                lives = 3; // Reset lives
+
                 // Reactivate all blocks
                 for (int row = 0; row < BLOCK_ROWS; row++) {
                     for (int col = 0; col < BLOCK_COLUMNS; col++) {
@@ -105,7 +132,27 @@ int main() {
                         // Randomized positioning for blocks
                         blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
                         blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
+
+                        // Purple Blocks = +1 life
+                        int randomValue = GetRandomValue(0, 19);
+                        if (randomValue == 0) {
+                            blocks[row][col].color = PURPLE;
+                            blocks[row][col].number = 1;
+                        } else if (randomValue == 1) {
+                            blocks[row][col].color = TEAL;
+                            blocks[row][col].number = -1;
+                            blocks[row][col].active = true;
+                        }
                     }
+                }
+
+                // Reset exploding balls
+                for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
+                    explodingBalls[i].position = ZeroVector2();
+                    explodingBalls[i].velocity = ZeroVector2();
+                    explodingBalls[i].radius = ballRadius / 2;
+                    explodingBalls[i].hitsRemaining = 10;
+                    explodingBalls[i].active = false;
                 }
             } else if (IsKeyPressed(KEY_ESCAPE)) {
                 CloseWindow();
@@ -116,16 +163,18 @@ int main() {
             continue;
         }
 
-        //setting up WIN conditions
-        win = true;
-        for (int row = 0; row < BLOCK_ROWS; row++) {
-            for (int col = 0; col < BLOCK_COLUMNS; col++) {
-                if (blocks[row][col].active) {
-                    win = false;
-                    break;
+        // setting up WIN conditions
+        if (gameStarted) {
+            win = true;
+            for (int row = 0; row < BLOCK_ROWS; row++) {
+                for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                    if (blocks[row][col].active && blocks[row][col].number != -1) {
+                        win = false;
+                        break;
+                    }
                 }
+                if (!win) break;
             }
-            if (!win) break;
         }
 
         if (win) {
@@ -141,6 +190,7 @@ int main() {
                 ballSpeed = 200.0f;
                 ballPosition = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
                 ballVelocity = ZeroVector2();
+                lives = 3;
 
                 for (int row = 0; row < BLOCK_ROWS; row++) {
                     for (int col = 0; col < BLOCK_COLUMNS; col++) {
@@ -152,7 +202,20 @@ int main() {
                         // Randomized positioning for blocks
                         blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
                         blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
+
+                        if (GetRandomValue(0, 9) == 0) {
+                            blocks[row][col].color = PURPLE;
+                            blocks[row][col].number = 1;
+                        }
                     }
+                }
+
+                for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
+                    explodingBalls[i].position = ZeroVector2();
+                    explodingBalls[i].velocity = ZeroVector2();
+                    explodingBalls[i].radius = ballRadius / 2;
+                    explodingBalls[i].hitsRemaining = 10;
+                    explodingBalls[i].active = false;
                 }
             } else if (IsKeyPressed(KEY_ESCAPE)) {
                 CloseWindow();
@@ -182,7 +245,7 @@ int main() {
                 paddle.x += PADDLE_SPEED * delta_time;
             }
 
-            //Make sure the ball is stuck to the paddle at the start of the game
+            // Make sure the ball is stuck to the paddle at the start of the game
             if (ballStuck) {
                 ballPosition.x = paddle.x + paddle.width / 2;
                 ballPosition.y = paddle.y - ballRadius;
@@ -204,14 +267,15 @@ int main() {
                 if (ballPosition.y - ballRadius <= 0) {
                     ballVelocity.y *= -1;
                 }
-                //lives and logic for removing lives
+
+                // Lives and logic for removing lives
                 if (ballPosition.y + ballRadius > SCREEN_HEIGHT) {
                     lives--;
                     if (lives <= 0) {
                         gameOver = true;
                     } else {
                         ballStuck = true;
-                        ballPosition = (Vector2){paddle.x + paddle.width / 2,  paddle.y - ballRadius};
+                        ballPosition = (Vector2){paddle.x + paddle.width / 2, paddle.y - ballRadius};
                         ballSpeed = 200.0f;
                         ballVelocity = ZeroVector2();
                     }
@@ -245,22 +309,54 @@ int main() {
                         if (blocks[row][col].active) {
                             // Check for collision with the ball
                             if (CheckCollisionCircles(ballPosition, ballRadius, blocks[row][col].position, blocks[row][col].radius)) {
+
+                                if (ColorsEqual(blocks[row][col].color, TEAL)) {
+                                    // Trigger Teal block explosion
+                                    int explodingBallsCreated = 0;
+
+                                    for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
+                                        if (!explodingBalls[i].active) {
+                                            explodingBalls[i].active = true;
+                                            explodingBalls[i].position = blocks[row][col].position;
+                                            explodingBalls[i].radius = ballRadius / 2;
+                                            explodingBalls[i].hitsRemaining = 10;
+
+                                            // Assign velocity in a circular pattern
+                                            float angle = (2 * PI / MAX_EXPLODING_BALLS) * explodingBallsCreated;
+                                            explodingBalls[i].velocity = ScaleVector2(
+                                                (Vector2){cosf(angle), sinf(angle)},
+                                                ballSpeed * 0.5f
+                                            );
+
+                                            explodingBallsCreated++;
+                                            if (explodingBallsCreated >= MAX_EXPLODING_BALLS) break;
+                                        }
+                                    }
+
+                                    // Deactivate the Teal block
+                                    blocks[row][col].active = false;
+                                    break;
+                                }
+
                                 blocks[row][col].number--;
                                 blocks[row][col].radius *= 0.75f;
                                 ballVelocity.y *= -1;
 
                                 // this changes the color of the blocks depending on which number it is
                                 switch (blocks[row][col].number) {
-                                    case 3: blocks[row][col].color = GREEN; break;
-                                    case 2: blocks[row][col].color = YELLOW; break;
-                                    case 1: blocks[row][col].color = RED; break;
+                                    case 3:
+                                        blocks[row][col].color = GREEN;
+                                        break;
+                                    case 2:
+                                        blocks[row][col].color = YELLOW;
+                                        break;
+                                    case 1:
+                                        blocks[row][col].color = RED;
+                                        break;
                                 }
 
-                                //handling the logic for Life (Purple) block
-                                if (blocks[row][col].color.r == PURPLE.r &&
-                                    blocks[row][col].color.g == PURPLE.g &&
-                                    blocks[row][col].color.b == PURPLE.b &&
-                                    blocks[row][col].color.a == PURPLE.a) {
+                                // handling the logic for Life (Purple) block
+                                if (ColorsEqual(blocks[row][col].color, PURPLE)) {
                                     lives++;
                                     blocks[row][col].active = false;
                                 }
@@ -268,6 +364,33 @@ int main() {
                                 // delete block after number reaches 0
                                 if (blocks[row][col].number <= 0) {
                                     blocks[row][col].active = false;
+                                }
+
+                                // Teal block logic (Exploding Balls)
+                                if (ColorsEqual(blocks[row][col].color, TEAL)) {
+                                    int explodingBallsCreated = 0;
+
+                                    for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
+                                        if (!explodingBalls[i].active) {
+                                            explodingBalls[i].active = true;
+                                            explodingBalls[i].position = blocks[row][col].position;
+                                            explodingBalls[i].radius = ballRadius / 2;
+                                            explodingBalls[i].hitsRemaining = 10;
+
+                                            // Assign velocity in a circular pattern
+                                            float angle = (2 * PI / MAX_EXPLODING_BALLS) * explodingBallsCreated;
+                                            explodingBalls[i].velocity = ScaleVector2(
+                                                (Vector2){cosf(angle), sinf(angle)},
+                                                ballSpeed * 0.5f
+                                            );
+
+                                            explodingBallsCreated++;
+                                            if (explodingBallsCreated >= MAX_EXPLODING_BALLS) break;
+                                        }
+                                    }
+
+                                    blocks[row][col].active = false;
+                                    break;
                                 }
 
                                 // increase ball-speed by 10% when "block" is hit
@@ -281,27 +404,88 @@ int main() {
                         }
                     }
                 }
+
+                // Update exploding balls logic
+                for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
+                    if (explodingBalls[i].active) {
+                        explodingBalls[i].position.x += explodingBalls[i].velocity.x * delta_time;
+                        explodingBalls[i].position.y += explodingBalls[i].velocity.y * delta_time;
+
+                        // Wall collisions for exploding balls
+                        if (explodingBalls[i].position.x - explodingBalls[i].radius <= 0 || explodingBalls[i].position.x + explodingBalls[i].radius >= SCREEN_WIDTH) {
+                            explodingBalls[i].velocity.x *= -1;
+                        }
+                        if (explodingBalls[i].position.y - explodingBalls[i].radius <= 0 || explodingBalls[i].position.y + explodingBalls[i].radius >= SCREEN_HEIGHT) {
+                            explodingBalls[i].velocity.y *= -1;
+                        }
+
+                        // Block collisions for exploding balls
+                        for (int row = 0; row < BLOCK_ROWS; row++) {
+                            for (int col = 0; col < BLOCK_COLUMNS; col++) {
+                                if (blocks[row][col].active) {
+                                    if (CheckCollisionCircles(explodingBalls[i].position, explodingBalls[i].radius, blocks[row][col].position, blocks[row][col].radius)) {
+                                        blocks[row][col].number--;
+                                        blocks[row][col].radius *= 0.75f;
+                                        explodingBalls[i].hitsRemaining--;
+
+                                        // change the block's color
+                                        switch (blocks[row][col].number) {
+                                            case 3:
+                                                blocks[row][col].color = GREEN;
+                                                break;
+                                            case 2:
+                                                blocks[row][col].color = YELLOW;
+                                                break;
+                                            case 1:
+                                                blocks[row][col].color = RED;
+                                                break;
+                                        }
+
+                                        // delete block after number reaches 0
+                                        if (blocks[row][col].number <= 0) {
+                                            blocks[row][col].active = false;
+                                        }
+
+                                        if (explodingBalls[i].hitsRemaining <= 0) {
+                                            explodingBalls[i].active = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
+
             // Draw block circles
             for (int row = 0; row < BLOCK_ROWS; row++) {
                 for (int col = 0; col < BLOCK_COLUMNS; col++) {
                     if (blocks[row][col].active) {
                         DrawCircle(blocks[row][col].position.x, blocks[row][col].position.y, blocks[row][col].radius, blocks[row][col].color);
-                        DrawText(TextFormat("%d", blocks[row][col].number),
-                                 blocks[row][col].position.x - MeasureText(TextFormat("%d", blocks[row][col].number), 20) / 2,
-                                 blocks[row][col].position.y - 10, 20, WHITE);
+                        if (!ColorsEqual(blocks[row][col].color, TEAL) && !ColorsEqual(blocks[row][col].color, PURPLE)) {
+                            DrawText(TextFormat("%d", blocks[row][col].number),
+                                blocks[row][col].position.x - MeasureText(TextFormat("%d", blocks[row][col].number), 20) / 2,
+                                blocks[row][col].position.y - 10, 20, WHITE);
+                        }
                     }
                 }
             }
 
-            //Draw Life Counter
-            DrawText(TextFormat("Lives: %d", lives), 10,10,20, WHITE);
+            // Draw Life Counter
+            DrawText(TextFormat("Lives: %d", lives), 10, 10, 20, WHITE);
 
             // Draw Paddle
             DrawRectangleRec(paddle, WHITE);
 
             // Draw Ball
             DrawCircleV(ballPosition, ballRadius, WHITE);
+
+            // Draw Exploding Balls
+            for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
+                if (explodingBalls[i].active) {
+                    DrawCircleV(explodingBalls[i].position, explodingBalls[i].radius, WHITE);
+                }
+            }
         }
         EndDrawing();
     }
