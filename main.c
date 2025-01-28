@@ -133,15 +133,14 @@ int main() {
                         blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
                         blocks[row][col].position.y = GetRandomValue(BLOCK_RADIUS, SCREEN_HEIGHT / 2 - BLOCK_RADIUS);
 
-                        // Purple Blocks = +1 life
+                        // Purple Blocks = +1 life + higher chanse of purple//teal blocks
                         int randomValue = GetRandomValue(0, 19);
                         if (randomValue == 0) {
                             blocks[row][col].color = PURPLE;
                             blocks[row][col].number = 1;
-                        } else if (randomValue == 1) {
+                        } else if (randomValue <= 2) {
                             blocks[row][col].color = TEAL;
                             blocks[row][col].number = -1;
-                            blocks[row][col].active = true;
                         }
                     }
                 }
@@ -335,7 +334,7 @@ int main() {
 
                                     // Deactivate the Teal block
                                     blocks[row][col].active = false;
-                                    break;
+                                    break; // Prevent further collision checks for this block
                                 }
 
                                 blocks[row][col].number--;
