@@ -30,7 +30,12 @@ else()
 endif()
 
 # Add executable
-add_executable(RayLib_Shooter main.c)
+add_executable(RayLib_Shooter src/main.c
+        src/game.c
+        src/vector_math.c
+        src/file_io.c
+        src/draw.c
+)
 
 # Set the include directory
 target_include_directories(RayLib_Shooter PRIVATE ${raylib_INCLUDE_DIRS})
@@ -41,3 +46,4 @@ if (WIN32)
 else()
     target_link_libraries(RayLib_Shooter PRIVATE ${LIB1})
 endif()
+

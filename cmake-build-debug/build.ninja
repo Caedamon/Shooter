@@ -49,13 +49,45 @@ cmake_ninja_workdir = C$:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-
 
 build cmake_object_order_depends_target_RayLib_Shooter: phony || cmake_object_order_depends_target_glfw cmake_object_order_depends_target_raylib
 
-build CMakeFiles/RayLib_Shooter.dir/main.c.obj: C_COMPILER__RayLib_Shooter_unscanned_Debug C$:/Users/Frozztie/Documents/00-CLion/Shooter/main.c || cmake_object_order_depends_target_RayLib_Shooter
+build CMakeFiles/RayLib_Shooter.dir/src/main.c.obj: C_COMPILER__RayLib_Shooter_unscanned_Debug C$:/Users/Frozztie/Documents/00-CLion/Shooter/src/main.c || cmake_object_order_depends_target_RayLib_Shooter
   DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
-  DEP_FILE = CMakeFiles\RayLib_Shooter.dir\main.c.obj.d
+  DEP_FILE = CMakeFiles\RayLib_Shooter.dir\src\main.c.obj.d
   FLAGS = -g -std=gnu99 -fdiagnostics-color=always
   INCLUDES = -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src/external/glfw/include
   OBJECT_DIR = CMakeFiles\RayLib_Shooter.dir
-  OBJECT_FILE_DIR = CMakeFiles\RayLib_Shooter.dir
+  OBJECT_FILE_DIR = CMakeFiles\RayLib_Shooter.dir\src
+
+build CMakeFiles/RayLib_Shooter.dir/src/game.c.obj: C_COMPILER__RayLib_Shooter_unscanned_Debug C$:/Users/Frozztie/Documents/00-CLion/Shooter/src/game.c || cmake_object_order_depends_target_RayLib_Shooter
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  DEP_FILE = CMakeFiles\RayLib_Shooter.dir\src\game.c.obj.d
+  FLAGS = -g -std=gnu99 -fdiagnostics-color=always
+  INCLUDES = -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src/external/glfw/include
+  OBJECT_DIR = CMakeFiles\RayLib_Shooter.dir
+  OBJECT_FILE_DIR = CMakeFiles\RayLib_Shooter.dir\src
+
+build CMakeFiles/RayLib_Shooter.dir/src/vector_math.c.obj: C_COMPILER__RayLib_Shooter_unscanned_Debug C$:/Users/Frozztie/Documents/00-CLion/Shooter/src/vector_math.c || cmake_object_order_depends_target_RayLib_Shooter
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  DEP_FILE = CMakeFiles\RayLib_Shooter.dir\src\vector_math.c.obj.d
+  FLAGS = -g -std=gnu99 -fdiagnostics-color=always
+  INCLUDES = -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src/external/glfw/include
+  OBJECT_DIR = CMakeFiles\RayLib_Shooter.dir
+  OBJECT_FILE_DIR = CMakeFiles\RayLib_Shooter.dir\src
+
+build CMakeFiles/RayLib_Shooter.dir/src/file_io.c.obj: C_COMPILER__RayLib_Shooter_unscanned_Debug C$:/Users/Frozztie/Documents/00-CLion/Shooter/src/file_io.c || cmake_object_order_depends_target_RayLib_Shooter
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  DEP_FILE = CMakeFiles\RayLib_Shooter.dir\src\file_io.c.obj.d
+  FLAGS = -g -std=gnu99 -fdiagnostics-color=always
+  INCLUDES = -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src/external/glfw/include
+  OBJECT_DIR = CMakeFiles\RayLib_Shooter.dir
+  OBJECT_FILE_DIR = CMakeFiles\RayLib_Shooter.dir\src
+
+build CMakeFiles/RayLib_Shooter.dir/src/draw.c.obj: C_COMPILER__RayLib_Shooter_unscanned_Debug C$:/Users/Frozztie/Documents/00-CLion/Shooter/src/draw.c || cmake_object_order_depends_target_RayLib_Shooter
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  DEP_FILE = CMakeFiles\RayLib_Shooter.dir\src\draw.c.obj.d
+  FLAGS = -g -std=gnu99 -fdiagnostics-color=always
+  INCLUDES = -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src -IC:/Users/Frozztie/Documents/00-CLion/Shooter/cmake-build-debug/_deps/raylib-src/src/external/glfw/include
+  OBJECT_DIR = CMakeFiles\RayLib_Shooter.dir
+  OBJECT_FILE_DIR = CMakeFiles\RayLib_Shooter.dir\src
 
 
 # =============================================================================
@@ -65,7 +97,7 @@ build CMakeFiles/RayLib_Shooter.dir/main.c.obj: C_COMPILER__RayLib_Shooter_unsca
 #############################################
 # Link the executable RayLib_Shooter.exe
 
-build RayLib_Shooter.exe: C_EXECUTABLE_LINKER__RayLib_Shooter_Debug CMakeFiles/RayLib_Shooter.dir/main.c.obj | _deps/raylib-build/raylib/libraylib.a || _deps/raylib-build/raylib/external/glfw/src/glfw _deps/raylib-build/raylib/libraylib.a
+build RayLib_Shooter.exe: C_EXECUTABLE_LINKER__RayLib_Shooter_Debug CMakeFiles/RayLib_Shooter.dir/src/main.c.obj CMakeFiles/RayLib_Shooter.dir/src/game.c.obj CMakeFiles/RayLib_Shooter.dir/src/vector_math.c.obj CMakeFiles/RayLib_Shooter.dir/src/file_io.c.obj CMakeFiles/RayLib_Shooter.dir/src/draw.c.obj | _deps/raylib-build/raylib/libraylib.a || _deps/raylib-build/raylib/external/glfw/src/glfw _deps/raylib-build/raylib/libraylib.a
   FLAGS = -g
   LINK_LIBRARIES = _deps/raylib-build/raylib/libraylib.a  -lwinmm  -lopengl32  -lglu32  -lwinmm  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\RayLib_Shooter.dir
