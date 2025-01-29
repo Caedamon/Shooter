@@ -1,3 +1,11 @@
+/*
+ https://github.com/Caedamon/Shooter.git
+ git link
+
+ Created and finalized by Carl F.
+*/
+
+
 #include "raylib.h"
 #include "game.h"
 #include "draw.h"
