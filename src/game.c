@@ -39,6 +39,7 @@ void InitGame(void) {
             blocks[row][col].radius = BLOCK_RADIUS;
             blocks[row][col].color = BLUE;
             blocks[row][col].active = true;
+            blocks[row][col].score = 10;
 
             // Randomized block positioning
             blocks[row][col].position.x = GetRandomValue(BLOCK_RADIUS, SCREEN_WIDTH - BLOCK_RADIUS);
@@ -49,9 +50,11 @@ void InitGame(void) {
             if (randomValue == 0) {
                 blocks[row][col].color = PURPLE;
                 blocks[row][col].number = 1;
+                blocks[row][col].score = 50;
             } else if (randomValue == 1) {
                 blocks[row][col].color = TEAL;
                 blocks[row][col].number = -1;
+                blocks[row][col].score = 0;
             }
         }
     }
@@ -141,24 +144,24 @@ void UpdateGame(bool *gameOver, bool *win, bool *ballStuck) {
             if (blocks[row][col].active) {
                 if (CheckCollisionCircles(ballPosition, ballRadius, blocks[row][col].position, blocks[row][col].radius)) {
                     if (ColorsEqual(blocks[row][col].color, TEAL)) {
-                        // Handle teal block (exploding ball) behavior
-                        int explodingBallsCreated = 0;
-
+                        // Always spawn MAX_EXPLODING_BALLS, regardless of existing ones
                         for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
-                            if (!explodingBalls[i].active) {
-                                explodingBalls[i].active = true;
-                                explodingBalls[i].position = blocks[row][col].position;
-                                explodingBalls[i].radius = ballRadius / 2;
-                                explodingBalls[i].hitsRemaining = 10;
+                            for (int j = 0; j < MAX_EXPLODING_BALLS; j++) {
+                                if (!explodingBalls[j].active) {
+                                    explodingBalls[j].active = true;
+                                    explodingBalls[j].position = blocks[row][col].position;
+                                    explodingBalls[j].radius = ballRadius / 2;
+                                    explodingBalls[j].hitsRemaining = 10;
+                                    explodingBalls[i].scoreMultiplier = 3;
 
-                                // Velocity in circular pattern
-                                float angle = (2 * PI / MAX_EXPLODING_BALLS) * explodingBallsCreated;
-                                explodingBalls[i].velocity = ScaleVector2(
-                                    (Vector2){cosf(angle), sinf(angle)},
-                                    ballSpeed * 2.0f
-                                );
-                                explodingBallsCreated++;
-                                if (explodingBallsCreated >= MAX_EXPLODING_BALLS) break; // Stop after spawning all balls
+                                    // Velocity in circular pattern
+                                    float angle = (2 * PI / MAX_EXPLODING_BALLS) * i;
+                                    explodingBalls[j].velocity = ScaleVector2(
+                                        (Vector2){cosf(angle), sinf(angle)},
+                                        ballSpeed * 2.0f
+                                    );
+                                    break;
+                                }
                             }
                         }
                         blocks[row][col].active = false;
@@ -176,6 +179,7 @@ void UpdateGame(bool *gameOver, bool *win, bool *ballStuck) {
                     }
 
                     if (blocks[row][col].number <= 0) {
+                        playerScore += blocks[row][col].score;
                         blocks[row][col].active = false;
                     }
 
@@ -218,6 +222,9 @@ for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
                     blocks[row][col].number--;
                     blocks[row][col].radius *= 0.75f;
                     explodingBalls[i].hitsRemaining--;
+
+                    // Multiply score when an exploding ball hits
+                    playerScore += blocks[row][col].score * explodingBalls[i].scoreMultiplier;
 
                     // Change block color
                     switch (blocks[row][col].number) {

@@ -27,6 +27,9 @@ void DrawGame(void) {
     // Draw life counter
     DrawText(TextFormat("Lives: %d", lives), 10, 10, 20, WHITE);
 
+    //Draw Score
+    DrawText(TextFormat("Score: %d", playerScore), 10, 30, 20, WHITE);
+
     // Draw paddle
     DrawRectangleRec(paddle, WHITE);
 

@@ -29,6 +29,7 @@ typedef struct {
     Color color;
     bool active;
     Vector2 position;
+    int score;
 } Block;
 
 typedef struct {
@@ -37,6 +38,7 @@ typedef struct {
     float radius;
     int hitsRemaining;
     bool active;
+    int scoreMultiplier;
 } ExplodingBall;
 
 // Extern global variables (shared across files)

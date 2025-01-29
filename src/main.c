@@ -34,7 +34,7 @@ int main() {
 
         // Display the current high score on the screen during gameplay
         DrawText(TextFormat("High Score: %s - %d", highScore.playerName, highScore.score),
-                 10, 40, 20, WHITE);
+                 10, 50, 20, WHITE);
 
         if (gameOver) {
             // Draw game over screen
