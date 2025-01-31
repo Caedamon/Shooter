@@ -37,10 +37,12 @@ void DrawGame(void) {
     DrawCircleV(ballPosition, ballRadius, WHITE);
 
     // Draw exploding balls
-    for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
-        if (explodingBalls[i].active) {
-            DrawCircleV(explodingBalls[i].position, explodingBalls[i].radius, WHITE);
+    ExplodingBallNode *ballNode = explodingBallList;
+    while (ballNode != NULL) {
+        if (ballNode->ball.active) {
+            DrawCircleV(ballNode->ball.position, ballNode->ball.radius, RED);
         }
+        ballNode = ballNode->next;
     }
 }
 

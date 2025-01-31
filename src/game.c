@@ -3,6 +3,7 @@
 #include "vector_math.h"
 #include <math.h>
 #include "file_io.h"
+#include <stdlib.h>
 
 // Definitions for paddle, ball, blocks, etc.
 #define PADDLE_SPEED 650.0f
@@ -12,6 +13,7 @@
 #define BLOCK_RADIUS (ballRadius * 3)
 #define MAX_EXPLODING_BALLS 10
 
+
 // Global variables for game state
 Block blocks[BLOCK_ROWS][BLOCK_COLUMNS];
 Rectangle paddle;
@@ -20,11 +22,12 @@ Vector2 ballVelocity;
 float ballRadius;
 float ballSpeed;
 int lives;
-ExplodingBall explodingBalls[MAX_EXPLODING_BALLS];
+ExplodingBallNode *explodingBallList = NULL;
 int playerScore = 0;
 
 // Initializes the game state
 void InitGame(void) {
+    explodingBallList = NULL;
     paddle = (Rectangle){SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 30, 100, 20};
     ballPosition = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
     ballVelocity = ScaleVector2(NormalizeVector2((Vector2){200.0f, -200.0f}), 200.0f);
@@ -57,15 +60,6 @@ void InitGame(void) {
                 blocks[row][col].score = 0;
             }
         }
-    }
-
-    // Initialize exploding balls
-    for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
-        explodingBalls[i].position = ZeroVector2();
-        explodingBalls[i].velocity = ZeroVector2();
-        explodingBalls[i].radius = ballRadius / 2;
-        explodingBalls[i].hitsRemaining = 10;
-        explodingBalls[i].active = false;
     }
 }
 
@@ -146,24 +140,25 @@ void UpdateGame(bool *gameOver, bool *win, bool *ballStuck) {
                     if (ColorsEqual(blocks[row][col].color, TEAL)) {
                         // Always spawn MAX_EXPLODING_BALLS, regardless of existing ones
                         for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
-                            for (int j = 0; j < MAX_EXPLODING_BALLS; j++) {
-                                if (!explodingBalls[j].active) {
-                                    explodingBalls[j].active = true;
-                                    explodingBalls[j].position = blocks[row][col].position;
-                                    explodingBalls[j].radius = ballRadius / 2;
-                                    explodingBalls[j].hitsRemaining = 10;
-                                    explodingBalls[i].scoreMultiplier = 3;
+                            ExplodingBallNode *newNode = (ExplodingBallNode *)malloc(sizeof(ExplodingBallNode));
+                            if (!newNode) break;
 
-                                    // Velocity in circular pattern
-                                    float angle = (2 * PI / MAX_EXPLODING_BALLS) * i;
-                                    explodingBalls[j].velocity = ScaleVector2(
-                                        (Vector2){cosf(angle), sinf(angle)},
-                                        ballSpeed * 2.0f
-                                    );
-                                    break;
-                                }
-                            }
+                            newNode->ball.active = true;
+                            newNode->ball.position = blocks[row][col].position;
+                            newNode->ball.radius = ballRadius / 2;
+                            newNode->ball.hitsRemaining = 10;
+                            newNode->ball.scoreMultiplier = 3;
+
+                            float angle = (2 * PI / MAX_EXPLODING_BALLS) * i;
+                            newNode->ball.velocity = ScaleVector2(
+                                (Vector2){cosf(angle), sinf(angle)},
+                                ballSpeed * 2.0f
+                            );
+
+                            newNode->next = explodingBallList;
+                            explodingBallList = newNode;
                         }
+
                         blocks[row][col].active = false;
                         break;
                     }
@@ -196,69 +191,82 @@ void UpdateGame(bool *gameOver, bool *win, bool *ballStuck) {
     }
 
     // Exploding ball logic
-for (int i = 0; i < MAX_EXPLODING_BALLS; i++) {
-    if (explodingBalls[i].active) {
-        explodingBalls[i].position.x += explodingBalls[i].velocity.x * delta_time;
-        explodingBalls[i].position.y += explodingBalls[i].velocity.y * delta_time;
+ExplodingBallNode *prev = NULL;
+ExplodingBallNode *ballNode = explodingBallList;
 
-        // Wall collisions for exploding balls
-        if (explodingBalls[i].position.x - explodingBalls[i].radius <= 0 || explodingBalls[i].position.x + explodingBalls[i].radius >= SCREEN_WIDTH) {
-            explodingBalls[i].velocity.x *= -1;
-        }
-        if (explodingBalls[i].position.y - explodingBalls[i].radius <= 0 || explodingBalls[i].position.y + explodingBalls[i].radius >= SCREEN_HEIGHT) {
-            explodingBalls[i].velocity.y *= -1;
-        }
+while (ballNode != NULL) {
+    ballNode->ball.position.x += ballNode->ball.velocity.x * delta_time;
+    ballNode->ball.position.y += ballNode->ball.velocity.y * delta_time;
 
-        // Block collisions for exploding balls
-        for (int row = 0; row < BLOCK_ROWS; row++) {
-            for (int col = 0; col < BLOCK_COLUMNS; col++) {
-                if (blocks[row][col].active && CheckCollisionCircles(
-                        explodingBalls[i].position,
-                        explodingBalls[i].radius,
-                        blocks[row][col].position,
-                        blocks[row][col].radius)) {
+    // Wall collisions for exploding balls
+    if (ballNode->ball.position.x - ballNode->ball.radius <= 0 ||
+        ballNode->ball.position.x + ballNode->ball.radius >= SCREEN_WIDTH) {
+        ballNode->ball.velocity.x *= -1;
+    }
+    if (ballNode->ball.position.y - ballNode->ball.radius <= 0 ||
+        ballNode->ball.position.y + ballNode->ball.radius >= SCREEN_HEIGHT) {
+        ballNode->ball.velocity.y *= -1;
+    }
 
-                    // Handle block collision only once per hit
-                    blocks[row][col].number--;
-                    blocks[row][col].radius *= 0.75f;
-                    explodingBalls[i].hitsRemaining--;
+    // Block collisions for exploding balls
+    for (int row = 0; row < BLOCK_ROWS; row++) {
+        for (int col = 0; col < BLOCK_COLUMNS; col++) {
+            if (blocks[row][col].active && CheckCollisionCircles(
+                    ballNode->ball.position,
+                    ballNode->ball.radius,
+                    blocks[row][col].position,
+                    blocks[row][col].radius)) {
 
-                    // Multiply score when an exploding ball hits
-                    playerScore += blocks[row][col].score * explodingBalls[i].scoreMultiplier;
+                // Handle block collision only once per hit
+                blocks[row][col].number--;
+                blocks[row][col].radius *= 0.75f;
+                ballNode->ball.hitsRemaining--;
 
-                    // Change block color
-                    switch (blocks[row][col].number) {
-                        case 3: blocks[row][col].color = GREEN; break;
-                        case 2: blocks[row][col].color = YELLOW; break;
-                        case 1: blocks[row][col].color = RED; break;
-                    }
+                // Multiply score when an exploding ball hits
+                playerScore += blocks[row][col].score * ballNode->ball.scoreMultiplier;
 
-                    // Deactivate block if health is 0
-                    if (blocks[row][col].number <= 0) {
-                        blocks[row][col].active = false;
-                    }
-
-                    // Bounce logic for exploding balls
-                    Vector2 collisionNormal = NormalizeVector2(
-                        (Vector2){explodingBalls[i].position.x - blocks[row][col].position.x,
-                                  explodingBalls[i].position.y - blocks[row][col].position.y});
-
-                    // Prevent extreme bouncing
-                    Vector2 newVelocity = ReflectVector2(explodingBalls[i].velocity, collisionNormal);
-                    if (MagnitudeVector2(newVelocity) > ballSpeed * 2.0f) {
-                        newVelocity = ScaleVector2(NormalizeVector2(newVelocity), ballSpeed * 2.0f);
-                    }
-                    explodingBalls[i].velocity = newVelocity;
-
-                    // Deactivate exploding ball if hitsRemaining reaches 0
-                    if (explodingBalls[i].hitsRemaining <= 0) {
-                        explodingBalls[i].active = false;
-                    }
-
-                    break;
+                // Change block color
+                switch (blocks[row][col].number) {
+                    case 3: blocks[row][col].color = GREEN; break;
+                    case 2: blocks[row][col].color = YELLOW; break;
+                    case 1: blocks[row][col].color = RED; break;
                 }
+
+                // Deactivate block if health is 0
+                if (blocks[row][col].number <= 0) {
+                    blocks[row][col].active = false;
+                }
+
+                // Bounce logic for exploding balls
+                Vector2 collisionNormal = NormalizeVector2(
+                    (Vector2){ballNode->ball.position.x - blocks[row][col].position.x,
+                              ballNode->ball.position.y - blocks[row][col].position.y});
+
+                // Prevent extreme bouncing
+                Vector2 newVelocity = ReflectVector2(ballNode->ball.velocity, collisionNormal);
+                if (MagnitudeVector2(newVelocity) > ballSpeed * 2.0f) {
+                    newVelocity = ScaleVector2(NormalizeVector2(newVelocity), ballSpeed * 2.0f);
+                }
+                ballNode->ball.velocity = newVelocity;
+
+                break;
             }
         }
+    }
+
+    // Remove the ball if it is inactive
+    if (ballNode->ball.hitsRemaining <= 0) {
+        ExplodingBallNode *toDelete = ballNode;
+        if (prev == NULL) {
+            explodingBallList = ballNode->next;
+        } else {
+            prev->next = ballNode->next;
+        }
+        ballNode = ballNode->next;
+        free(toDelete);
+    } else {
+        prev = ballNode;
+        ballNode = ballNode->next;
     }
 }
 
@@ -281,5 +289,13 @@ bool ColorsEqual(Color c1, Color c2) {
 
 // Resets the game state
 void ResetGame(void) {
-    InitGame(); // Simply reinitialize all game objects
+    ExplodingBallNode *ballNode = explodingBallList;
+    while (ballNode != NULL) {
+        ExplodingBallNode *toDelete = ballNode;
+        ballNode = ballNode->next;
+        free(toDelete);
+    }
+    explodingBallList = NULL;
+
+    InitGame();
 }

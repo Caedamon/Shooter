@@ -41,6 +41,13 @@ typedef struct {
     int scoreMultiplier;
 } ExplodingBall;
 
+typedef struct ExplodingBallNode {
+    ExplodingBall ball;
+    struct ExplodingBallNode *next;
+} ExplodingBallNode;
+
+extern ExplodingBallNode *explodingBallList;
+
 // Extern global variables (shared across files)
 extern Block blocks[BLOCK_ROWS][BLOCK_COLUMNS];
 extern Rectangle paddle;
@@ -49,7 +56,6 @@ extern Vector2 ballVelocity;
 extern float ballRadius;
 extern float ballSpeed;
 extern int lives;
-extern ExplodingBall explodingBalls[MAX_EXPLODING_BALLS];
 
 // Function prototypes
 void InitGame(void);
