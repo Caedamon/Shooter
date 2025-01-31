@@ -70,6 +70,7 @@ void DrawGameOverScreen() {
         // Save the high score
         highScore.score = playerScore;
         strncpy(highScore.playerName, playerName, sizeof(highScore.playerName) - 1);
+        highScore.playerName[sizeof(highScore.playerName) - 1] = '\0';
         SaveHighScore(highScore);
     }
 }

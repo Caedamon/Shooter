@@ -20,8 +20,10 @@ HighScoreEntry LoadHighScore(void) {
     FILE *file = fopen("highscore.dat", "r");
     if (file) {
         if (fscanf(file, "%31s %d", entry.playerName, &entry.score) != 2) {
+            entry.playerName[0] = '\0'; // Ensure empty name on error
             TraceLog(LOG_WARNING, "Invalid high score format in file.");
         }
+        entry.playerName[MAX_NAME_LENGTH - 1] = '\0'; // Always null-terminate
         fclose(file);
     } else {
         TraceLog(LOG_WARNING, "Could not load high score: File does not exist.");
